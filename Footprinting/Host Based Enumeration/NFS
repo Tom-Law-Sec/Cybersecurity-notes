@@ -1,0 +1,108 @@
+### **NFS in a Nutshell**
+
+- **Purpose:** Access remote files like local ones, mostly used in Linux/Unix environments.
+    
+- **Protocol Difference:** SMB vs NFS—same goal, totally different protocols, so NFS clients can’t talk to SMB servers directly.
+    
+- **Versions:**
+    
+    - **NFSv2:** Old, UDP only, not widely used anymore.
+        
+    - **NFSv3:** Adds bigger file sizes, better error handling. Client/server compatibility is a bit messy.
+        
+    - **NFSv4:** Stateful, supports Kerberos, ACLs, firewall-friendly, single port 2049. Big upgrade in security and scalability.
+        
+    - **NFSv4.1:** Adds multipathing, cluster-friendly (pNFS), and session trunking.
+        
+
+---
+
+### **Authentication & Authorization**
+
+- NFS itself doesn’t handle auth; that’s done via RPC (ONC-RPC/SUN-RPC).
+    
+- Most common: **UNIX UID/GID**.
+    
+    - Risk: Client and server UID/GID mappings can mismatch, so only safe on trusted networks.
+        
+- NFSv4 adds proper user authentication, similar to SMB.
+    
+
+---
+
+### **Default Configuration**
+
+- **/etc/exports** defines what folders are shared and with whom.
+    
+- Common options:
+    
+    - `rw` / `ro` → read/write vs read-only.
+        
+    - `sync` / `async` → safer but slower vs faster.
+        
+    - `root_squash` → drops root privileges when accessing NFS (super important for security).
+        
+    - `insecure` → allows ports >1024 (risky for attackers).
+        
+- Example:
+    
+    `/mnt/nfs 10.129.14.0/24(sync,no_subtree_check)`
+    
+
+---
+
+### **Dangerous Configs**
+
+These are basically hacker’s best friends:
+
+- `rw` + `no_root_squash` → root on client can fully mess with files.
+    
+- `insecure` → non-root ports can access NFS.
+    
+- `nohide` → nested shares visible without proper control.
+    
+
+---
+
+### **Footprinting & Enumeration**
+
+- **Ports to check:** 111 (rpcbind) and 2049 (nfs).
+    
+- **Nmap tricks:**
+    
+    `sudo nmap -p111,2049 -sV -sC <target> sudo nmap --script nfs* <target> -p111,2049`
+    
+- **Show mounts:**
+    
+    `showmount -e <target>`
+    
+- **Mount remote share locally:**
+    
+    `mkdir target-NFS sudo mount -t nfs <target>:/ /target-NFS/ -o nolock cd target-NFS tree .`
+    
+
+---
+
+### **Practical Tips**
+
+- Look at both **UID/GID mapping** (`ls -n`) and **username/group view** (`ls -l`), especially if you’re planning to modify files.
+    
+- If `root_squash` is enabled, root can’t overwrite files—smart security move.
+    
+- NFS can also be used for privilege escalation if you upload SUID binaries to a shared folder.
+    
+
+---
+
+### **TL;DR Security-wise**
+
+- Only share on trusted networks.
+    
+- Always use `root_squash` unless you have a damn good reason not to.
+    
+- Watch out for `insecure` and `nohide` options—they can leak access.
+    
+- NFSv4 with Kerberos is your friend for production—v3 is fine for internal testing or labs.
+
+# References 
+https://academy.hackthebox.com/module/112/section/1068
