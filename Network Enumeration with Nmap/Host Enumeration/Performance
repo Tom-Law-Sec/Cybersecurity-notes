@@ -1,0 +1,140 @@
+# Performance
+
+When you're scanning big networks or dealing with potato-tier bandwidth, Nmap’s performance settings become your best friend. But speed comes with trade-offs — the faster you go, the more stuff you might miss. Like trying to read street signs while sprinting. Not ideal.
+
+Below is your cheat sheet.
+
+---
+
+#  **RTT Timeouts** — How Long Nmap Waits for Replies
+
+**RTT (Round-Trip Time)** = how long a packet takes to go out → and come back.
+
+Defaults:
+
+- **Initial RTT timeout** = 100ms
+    
+- Nmap adjusts automatically, but you can force it.
+    
+
+### Example: Default Scan
+
+`sudo nmap 10.129.2.0/24 -F`
+
+Result: ~39 seconds
+
+### Example: Tighter RTT
+
+`sudo nmap 10.129.2.0/24 -F --initial-rtt-timeout 50ms --max-rtt-timeout 100ms`
+
+Result: ~12 seconds (but found fewer hosts… yikes)
+
+ Moral of the story:  
+**If you tighten RTT too much, Nmap gives up early and misses hosts.**
+
+---
+
+#  **Max Retries** — How Many Times Nmap Re-Taps a Port
+
+Default: Nmap retries **10 times** if a port stays quiet.
+
+Cut retries = faster scan, but also more “nah bro, nothing here” false-negatives.
+
+### Example: Default
+
+`sudo nmap 10.129.2.0/24 -F`
+
+Open ports found: **23**
+
+### Max retries = 0
+
+`sudo nmap 10.129.2.0/24 -F --max-retries 0`
+
+Open ports found: **21**
+ You shaved off time, but also shaved off data. Choose wisely, Jedi.
+
+---
+
+#  **Packet Rates** — How Many Packets Per Second Nmap Yeets
+
+This is the _“I have permission so let me cook”_ setting.  
+Use in white-box tests where bandwidth isn’t an issue.
+
+### Min rate example
+
+`sudo nmap 10.129.2.0/24 -F --min-rate 300 -oN tnet.minrate300`
+
+Time drops from ~30s → ~8s  
+Open ports found: **same as normal!**
+
+ Setting a min rate tells Nmap:  
+**“Send at least X packets/sec. Step on it.”**
+
+But if the network is slow → packets drop → results get janky.
+
+---
+
+#  **Timing Templates (-T 0–5)** — Nmap’s Mood Settings
+
+Nmap comes with six timing profiles:
+
+|Template|Mood|Description|
+|---|---|---|
+|`-T0`|paranoid|Sneaks packets out one at a time. Grandma-speed. IDS safe.|
+|`-T1`|sneaky|Still slow. Moves like it owes nobody anything.|
+|`-T2`|polite|Slow-ish, avoids hogging bandwidth.|
+|`-T3`|normal|Default. Balanced. Doesn’t do anything dumb.|
+|`-T4`|aggressive|Fast. Great for LANs. Might piss off firewalls.|
+|`-T5`|insane|YOLO mode. Maximum speed. “Hope your network survives.”|
+
+### Example: Default
+
+`sudo nmap 10.129.2.0/24 -F`
+
+Time: ~32s
+
+### Example: T5
+
+`sudo nmap 10.129.2.0/24 -F -T 5`
+
+Time: ~18s  
+Ports found: same (lucky)
+
+ T5 is like microwaving your scan at max power.  
+Sometimes amazing. Sometimes everything explodes.
+
+---
+
+#  TL;DR — What Actually Matters
+
+### Going faster is fine IF:
+
+- You’re on a LAN
+    
+- You have permission
+    
+- You know the network can handle it
+    
+- Missing a few ports/hosts won't tank your engagement
+    
+
+### If accuracy is the priority:
+
+- Keep RTT reasonable
+    
+- Don’t zero out retries
+    
+- Stick with `-T3` or `-T4`
+    
+- Avoid being a packet spammer
+    
+
+### If stealth is the goal:
+
+- Use `-T0` or `-T1`
+    
+- Don’t touch packet rates
+    
+- Accept that this scan will finish when you’re like… 40
+# References 
+https://academy.hackthebox.com/module/19/section/105
