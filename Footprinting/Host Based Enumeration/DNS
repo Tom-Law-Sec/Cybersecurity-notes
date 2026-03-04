@@ -1,0 +1,121 @@
+# DNS
+
+### **DNS Basics**
+
+- **Purpose:** Translate human-readable domain names (like `academy.hackthebox.com`) into IP addresses. Think of it like a giant, distributed phonebook.
+    
+- **Distributed, not centralized:** No single “all-knowing server” exists. Thousands of servers worldwide handle queries.
+    
+
+**Types of DNS Servers**
+
+|Server Type|Role|
+|---|---|
+|**Root**|Top-level reference; knows TLD servers (like `.com`, `.net`). 13 globally distributed.|
+|**Authoritative**|Holds the “truth” for a specific zone. Answers queries for its domain.|
+|**Non-authoritative**|Queries other servers recursively to gather info.|
+|**Caching**|Temporarily stores DNS answers for faster lookup.|
+|**Forwarding**|Forwards queries to another DNS server.|
+|**Resolver**|Usually local to your computer/router; sends the query and waits for answers.|
+
+- **Privacy note:** Traditional DNS is unencrypted, so ISPs or anyone on your network could snoop. Encryption options: **DoT, DoH, DNSCrypt**.
+    
+
+---
+
+### **DNS Records**
+
+|Record|Purpose|
+|---|---|
+|**A**|IPv4 address|
+|**AAAA**|IPv6 address|
+|**MX**|Mail servers|
+|**NS**|Nameservers for the domain|
+|**TXT**|Arbitrary info (SPF, DMARC, verification)|
+|**CNAME**|Alias for another domain|
+|**PTR**|Reverse lookup (IP → name)|
+|**SOA**|Start of Authority; shows the admin and management info for the zone|
+
+- **Example:** SOA `awsdns-hostmaster.amazon.com` → email is actually `awsdns-hostmaster@amazon.com`.
+    
+
+---
+
+### **DNS Configuration (BIND9 Example)**
+
+- **Config files:**
+    
+    - `named.conf.local` → zone definitions
+        
+    - `named.conf.options` → general/global options
+        
+    - Zone files → actual DNS records
+        
+    - Reverse files → PTR records for IP → hostname mapping
+        
+- **Zone types:**
+    
+    - **Primary/master** → source of truth for a zone
+        
+    - **Secondary/slave** → syncs from the master; can provide redundancy/load balancing
+        
+
+---
+
+### **Security Considerations**
+
+- Dangerous or misconfigured settings can leak internal infrastructure or allow abuse:
+    
+    - `allow-transfer any` → anyone can do a zone transfer and see all internal records.
+        
+    - `allow-recursion` for untrusted clients → potential DNS amplification attacks.
+        
+    - Mismanaged TXT/SPF/DMARC entries can expose internal IPs or mail infrastructure.
+        
+
+---
+
+### **DNS Footprinting & Enumeration**
+
+- **Tools / Commands:**
+    
+    - `dig` → query specific records
+        
+        - `dig ns <domain> @<server>` → find nameservers
+            
+        - `dig soa <domain>` → administrative info
+            
+        - `dig any <domain>` → all publicly available records
+            
+        - `dig axfr <domain> @<server>` → zone transfer (if allowed)
+            
+        - `dig CH TXT version.bind @<server>` → BIND version
+            
+    - **Subdomain brute-forcing:** using a wordlist to find internal hosts
+        
+        `for sub in $(cat subdomains.txt); do dig $sub.domain.com @dnsserver; done`
+        
+    - **Tools like DNSenum** automate enumeration, including brute-forcing, AXFR, and version detection.
+        
+- **AXFR/Zone Transfer:**
+    
+    - Only allowed for specific servers (`allow-transfer`) or keys (`rndc-key`).
+        
+    - If misconfigured, reveals all domain records (internal IPs, hostnames, mail servers).
+        
+
+---
+
+### **Pentesting Takeaways**
+
+1. Start with `dig ns`, `dig soa`, and `dig any` to map the domain.
+    
+2. Test for **zone transfer** (AXFR). If allowed, you get a goldmine of internal structure.
+    
+3. Brute-force subdomains for hidden/internal hosts.
+    
+4. Always check for DNS misconfigurations: open recursion, version leaks, and weak zone transfers.
+    
+5. Keep in mind internal vs external records—internal hosts are often only exposed if security is sloppy.
+# References 
+https://academy.hackthebox.com/module/112/section/1069
