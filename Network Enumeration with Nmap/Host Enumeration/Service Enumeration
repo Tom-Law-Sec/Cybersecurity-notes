@@ -1,0 +1,198 @@
+# Service Enumeration
+
+When you’re doing recon, knowing **what service is running** is cool…  
+…but knowing **the exact version** is how you find the spicy vulnerabilities and dial in the perfect exploit.
+
+Think of it like:
+
+- _“An SSH server exists”_ → meh
+    
+- _“OpenSSH 7.6p1 Ubuntu 4ubuntu0.3”_ → oh yeah baby, now we’re cooking
+    
+
+The more precise the version, the easier it is to:
+
+- match known CVEs
+    
+- find public exploits
+    
+- track down source code
+    
+- identify OS/environment clues
+    
+
+---
+
+#  Fast Recon First, Heavy Recon Later
+
+Nmap version scans (`-sV`) are chatty and slower.  
+So best practice is:
+
+1. **Quick port scan → get the lay of the land.**
+    
+2. **Background full port scan (`-p-`).**
+    
+3. **Then run version detection on the ports you care about.**
+    
+
+Why? Because firing off full-port + version-detection all at once =  
+_“Hi security team, please notice me ”_
+
+---
+
+#  Version Scan Basics
+
+A full version scan looks like:
+
+`sudo nmap 10.129.2.28 -p- -sV`
+
+Nmap then:
+
+- connects to each port
+    
+- grabs banners
+    
+- tries known signatures
+    
+- guesses service versions based on behavior
+    
+
+You can watch progress using:
+
+### **Space Bar**
+
+Shows live scan stats (secret Nmap hotkey magic).
+
+### **Or automate it:**
+
+`--stats-every=5s`
+
+`sudo nmap -p- -sV --stats-every=5s 10.129.2.28`
+
+Great when scans take forever and you need reassurance your machine isn’t frozen.
+
+---
+
+#  Verbosity: Because Waiting in Silence Is Painful
+
+`-v` or `-vv`
+
+Nmap will tell you the open ports **as soon as it finds them**, not at the end.
+
+Super handy:
+
+`sudo nmap -p- -sV -v 10.129.2.28`
+
+---
+
+#  Banner Grabbing (the Low-Hanging Fruit)
+
+Most services proudly yell,  
+“HEY, HERE’S EXACTLY WHAT I AM!”  
+right after the TCP handshake.
+
+Example Nmap output:
+
+`220 inlane ESMTP Postfix (Ubuntu)`
+
+Now here’s the fun bit…
+
+Sometimes Nmap **doesn’t show the whole banner**, even though it receives it.  
+This is because the automatic detection engine won’t always print every detail unless it matches a known pattern.
+
+Nmap might show:
+
+`25/tcp open  smtp Postfix smtpd`
+
+But the actual banner (from packet trace) was:
+
+`220 inlane ESMTP Postfix (Ubuntu)`
+
+See the difference?  
+Nmap hid **“Ubuntu”**, but the network traffic didn't.
+
+This is why manual banner grabbing is still the GOAT.
+
+---
+
+#  Packet Trace to the Rescue
+
+If you want to see _everything_ Nmap saw:
+
+`sudo nmap -p- -sV -Pn -n --disable-arp-ping --packet-trace 10.129.2.28`
+
+`--packet-trace` shows every packet sent and received.
+
+Result:
+
+`READ SUCCESS ... 220 inlane ESMTP Postfix (Ubuntu)`
+
+There’s your hidden info.
+
+---
+
+#  Manual Banner Grabbing (aka: "Fine, I'll do it myself")
+
+Nmap being stingy?  
+Whip out netcat:
+
+`nc -nv 10.129.2.28 25`
+
+Server immediately responds with:
+
+`220 inlane ESMTP Postfix (Ubuntu)`
+
+Boom. Full banner. No filters.
+
+---
+
+#  Tcpdump: Watching the Handshake Happen
+
+If you want to actually _see_ the TCP packets:
+
+`sudo tcpdump -i eth0 host 10.10.14.2 and 10.129.2.28`
+
+Then connect with netcat.
+
+You’ll see:
+
+### 1️ SYN →
+
+Your machine says “hey”
+
+### 2️ SYN/ACK →
+
+Server says “hey back”
+
+### 3️ ACK →
+
+Handshake complete  
+(connection established)
+
+### 4️ PSH/ACK →
+
+Server pushes data (the banner)
+
+`SMTP: 220 inlane ESMTP Postfix (Ubuntu)`
+
+### 5️ ACK →
+
+You confirm receipt
+
+Congrats — you just watched the banner happen in real time.
+
+---
+
+#  Key Takeaways (aka: your exam cheat codes)
+
+- **Use `-sV` for version detection**, but remember it's not perfect.
+    
+- **Nmap hides some banner details**, so packet-trace or nc can reveal more.
+    
+- **Quick scan first, full scan later** (don’t get caught lacking).
+    
+- **PSH-ACK = the server is sending you banner data**.
+    
+- **Tcpdump is your friend** when Nmap’s output feels suspiciously “clean.”
+# References 
+https://academy.hackthebox.com/module/19/section/103
