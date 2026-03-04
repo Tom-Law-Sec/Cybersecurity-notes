@@ -1,0 +1,150 @@
+Host Discovery
+
+## **Nmap Host Discovery — Key Notes**
+
+### **Why Host Discovery Matters**
+
+- In an internal pentest, first step = figure out which systems are _actually online_.
+    
+- Nmap offers multiple host-discovery techniques; the most effective is **ICMP echo requests (ping)**.
+    
+- Always save every scan result — helps with comparison, reporting, and catching inconsistencies between tools.
+    
+
+---
+
+## **Scanning a Network Range**
+
+**Command example:**
+
+`sudo nmap 10.129.2.0/24 -sn -oA tnet`
+
+**Output filtered with grep + cut shows alive hosts.**
+
+**Options:**
+
+- `10.129.2.0/24` → network range
+    
+- `-sn` → disable port scan (ping sweep only)
+    
+- `-oA tnet` → save results in all formats (XML, Nmap, Grepable)
+    
+
+**Note:**
+
+- Works only if firewalls allow ICMP.
+    
+- If hosts block ICMP, they may appear offline even though they’re alive.
+    
+
+---
+
+## **Scanning an IP List**
+
+Used when given a list of hosts to test.
+
+**Example list (`hosts.lst`):**
+
+`10.129.2.4 10.129.2.10 ...`
+
+**Scan command:**
+
+`sudo nmap -sn -oA tnet -iL hosts.lst`
+
+**Options:**
+
+- `-iL hosts.lst` → input list of targets
+    
+- Same behavior as the range scan
+    
+- Shows which hosts respond; non-responders may be ICMP-blocked
+    
+
+---
+
+## **Scanning Multiple IPs**
+
+### **Individual IPs**
+
+`sudo nmap -sn -oA tnet 10.129.2.18 10.129.2.19 10.129.2.20`
+
+### **IP Range (when adjacent)**
+
+`sudo nmap -sn -oA tnet 10.129.2.18-20`
+
+---
+
+## **Scanning a Single Host**
+
+Basic ping check:
+
+`sudo nmap 10.129.2.18 -sn -oA host`
+
+**Options:**
+
+- `-sn` → ping only
+    
+- Outputs latency + MAC address if found
+    
+
+### **Important Detail:**
+
+Nmap **automatically uses ARP** on local networks _before_ sending ICMP.  
+→ If ARP replies, Nmap labels host as alive even without ICMP.
+
+---
+
+## **Forcing ICMP Echo Requests**
+
+Use:
+
+`-PE`
+
+Example with packet trace:
+
+`sudo nmap 10.129.2.18 -sn -oA host -PE --packet-trace`
+
+Shows ARP request/response happening first.
+
+---
+
+## **Why Nmap Thinks a Host Is Alive**
+
+Use:
+
+`--reason`
+
+Example:
+
+`sudo nmap 10.129.2.18 -sn -oA host -PE --reason`
+
+Shows ARP response as the reason the host is considered "up."
+
+---
+
+## **Disabling ARP Ping**
+
+If you want _only_ ICMP echo requests:
+
+`sudo nmap 10.129.2.18 -sn -oA host -PE --packet-trace --disable-arp-ping`
+
+This forces:
+
+- ICMP Echo Request → ICMP Echo Reply
+    
+- No ARP traffic
+    
+
+---
+
+## **Takeaways**
+
+- Host discovery depends heavily on firewall rules (ICMP may be blocked).
+    
+- ARP pings take priority on local networks unless disabled.
+    
+- ICMP behavior can leak OS info (TTL, response timing).
+    
+- Saving scan results is essential for comparison + documentation.
+    
+- More host-discovery strategies are documented at Nmap’s official guide.
