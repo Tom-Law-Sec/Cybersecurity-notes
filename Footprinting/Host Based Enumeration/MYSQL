@@ -1,0 +1,125 @@
+
+### **MySQL Overview**
+
+- Open-source **relational database management system** (RDBMS) developed by Oracle.
+    
+- Stores structured data in **tables** with **rows** and **columns**, often in `.sql` files.
+    
+- Works on **client-server architecture**:
+    
+    - **Server:** Handles storage, distribution, and queries.
+        
+    - **Client:** Connects, retrieves, modifies, inserts, or deletes data using SQL.
+        
+- Common use case: **WordPress** stores posts, users, and settings in a local MySQL database.
+    
+
+---
+
+### **Typical Usage**
+
+- Suited for **dynamic websites** and applications requiring fast queries.
+    
+- Often paired with **LAMP stack** (Linux, Apache, MySQL, PHP) or **LEMP** (Nginx instead of Apache).
+    
+- Stores various types of data: headers, forms, usernames, emails, links, sensitive info.
+    
+- Sensitive info like passwords is usually **hashed/encrypted** by application code (PHP) before storage.
+    
+
+---
+
+### **MySQL Commands Basics**
+
+|Command|Description|
+|---|---|
+|`mysql -u <user> -p<password> -h <IP>`|Connect to a MySQL server (no space after `-p`).|
+|`show databases;`|List all databases.|
+|`use <database>;`|Switch to a specific database.|
+|`show tables;`|List all tables in the selected database.|
+|`show columns from <table>;`|List columns in a table.|
+|`select * from <table>;`|View all rows in a table.|
+|`select * from <table> where <column> = "<value>";`|Filter rows based on a condition.|
+
+---
+
+### **MariaDB**
+
+- Fork of MySQL by original developer.
+    
+- Open-source, compatible with MySQL.
+    
+
+---
+
+### **Default MySQL Configuration Example**
+
+`[client] port=3306 socket=/var/run/mysqld/mysqld.sock  [mysqld_safe] pid-file=/var/run/mysqld/mysqld.pid socket=/var/run/mysqld/mysqld.sock nice=0  [mysqld] skip-host-cache skip-name-resolve user=mysql pid-file=/var/run/mysqld/mysqld.pid socket=/var/run/mysqld/mysqld.sock port=3306 basedir=/usr datadir=/var/lib/mysql tmpdir=/tmp symbolic-links=0 !includedir /etc/mysql/conf.d/`
+
+---
+
+### **Dangerous / Security-Relevant Settings**
+
+|Setting|Effect / Risk|
+|---|---|
+|`user`|OS user MySQL runs as.|
+|`password`|Stored in plaintext in config; leakage = full DB access.|
+|`admin_address`|IP for admin connections; misconfigured = remote exposure.|
+|`debug`|Verbose output; can reveal sensitive info.|
+|`sql_warnings`|Shows warnings on single-row inserts; can leak hints for attacks.|
+|`secure_file_priv`|Limits file import/export; misconfiguration can allow file exfiltration.|
+
+---
+
+### **Footprinting / Scanning MySQL**
+
+- Default port: **3306/tcp**
+    
+- Use **Nmap** to scan and gather info:
+    
+
+`sudo nmap -sV -sC -p3306 --script mysql* <IP>`
+
+- Can detect:
+    
+    - Version
+        
+    - Users
+        
+    - Empty passwords
+        
+    - Brute-force vulnerabilities
+        
+- Always verify results; false positives are common.
+    
+
+---
+
+### **MySQL Database Structure**
+
+- **System Databases:**
+    
+    - `mysql` → core MySQL data & users.
+        
+    - `information_schema` → metadata about database objects (standardized).
+        
+    - `sys` → extended system info for management.
+        
+- **Example queries:**
+    
+
+`show databases; use mysql; show tables; select host, user from user;`
+
+---
+
+### **Best Practices**
+
+- Never expose MySQL server publicly without protection.
+    
+- Set strong passwords; avoid empty credentials.
+    
+- Regularly check for misconfigurations in `mysqld.cnf`.
+    
+- Test in a **VM** for safe learning.
+# References 
+https://academy.hackthebox.com/module/112/section/1238
