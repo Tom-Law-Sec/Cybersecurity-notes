@@ -1,0 +1,154 @@
+### **IMAP vs POP3**
+
+- **IMAP (Internet Message Access Protocol)**
+    
+    - Access emails from server, manage emails online.
+        
+    - Supports folders and hierarchical mailbox structures.
+        
+    - Client-server-based; allows local email client to sync with server mailbox.
+        
+    - Multiple clients can sync with same mailbox; emails stay on server until deleted.
+        
+    - Text-based (ASCII commands), extended functions (browse server emails).
+        
+    - Requires active connection, some clients offer offline mode with sync on reconnect.
+        
+    - Default port: 143 (unencrypted), 993 (SSL/TLS).
+        
+- **POP3 (Post Office Protocol v3)**
+    
+    - Only lists, retrieves, and deletes emails.
+        
+    - No folder management or multiple mailbox access.
+        
+    - Default port: 110 (unencrypted), 995 (SSL/TLS).
+        
+- **Security**
+    
+    - IMAP/POP3 unencrypted transmits credentials in plain text.
+        
+    - SSL/TLS used for encryption, standard/alternative ports depending on implementation.
+        
+- **SMTP**
+    
+    - Usually used to send emails.
+        
+    - Copying sent emails to IMAP folder allows all clients to access sent mails.
+        
+- **Advantages of IMAP**
+    
+    - Personal folders/folder structures for better management.
+        
+    - Multi-user access simultaneously.
+        
+    - Synchronization across multiple clients.
+        
+- **Disadvantages**
+    
+    - Increased server storage.
+        
+    - Offline management requires local mailbox copy.
+        
+
+---
+
+### **IMAP Commands**
+
+|Command|Description|
+|---|---|
+|LOGIN username password|Login|
+|LIST "" *|List all directories|
+|CREATE "INBOX"|Create mailbox|
+|DELETE "INBOX"|Delete mailbox|
+|RENAME "ToRead" "Important"|Rename mailbox|
+|LSUB "" *|List subscribed mailboxes|
+|SELECT INBOX|Access mailbox|
+|UNSELECT INBOX|Exit mailbox|
+|FETCH <ID> all|Retrieve message data|
+|CLOSE|Remove messages marked deleted|
+|LOGOUT|Close server connection|
+
+### **POP3 Commands**
+
+|Command|Description|
+|---|---|
+|USER username|Identify user|
+|PASS password|Authenticate user|
+|STAT|Number of emails on server|
+|LIST|Number and size of all emails|
+|RETR id|Retrieve email by ID|
+|DELE id|Delete email by ID|
+|CAPA|Server capabilities|
+|RSET|Reset transmitted info|
+|QUIT|Close server connection|
+
+---
+
+### **Dangerous/Debug Settings**
+
+|Setting|Description|
+|---|---|
+|auth_debug|Enable authentication debug logging|
+|auth_debug_passwords|Log passwords and authentication scheme|
+|auth_verbose|Log unsuccessful login attempts & reasons|
+|auth_verbose_passwords|Log passwords during auth (may truncate)|
+|auth_anonymous_username|Username for ANONYMOUS SASL login|
+
+---
+
+### **Server Ports & Encryption**
+
+- **POP3:** 110 / 995 (SSL/TLS)
+    
+- **IMAP:** 143 / 993 (SSL/TLS)
+    
+- Higher ports (993, 995) use encrypted communication.
+    
+
+---
+
+### **Footprinting**
+
+- Use **Nmap** to scan server ports: 110, 143, 993, 995.
+    
+- Scan returns service version, capabilities, and SSL certificate info.
+    
+- **Example Nmap output:**
+    
+    - IMAP/POP3 services: Dovecot
+        
+    - SSL cert shows CN, organization, location
+        
+    - Capabilities list commands supported by server
+        
+
+---
+
+### **Connecting to IMAP/POP3**
+
+- **cURL:**
+    
+
+`curl -k 'imaps://10.129.14.128' --user user:password`
+
+- **OpenSSL (TLS encrypted):**
+    
+
+`openssl s_client -connect 10.129.14.128:pop3s openssl s_client -connect 10.129.14.128:imaps`
+
+- Can use `-v` for verbose TLS handshake, cert details, server banner.
+    
+
+---
+
+### **Takeaways**
+
+- Understanding IMAP/POP3 setup and commands helps manage email servers and troubleshoot issues.
+    
+- Misconfigured servers may leak sensitive emails (debug logging, weak passwords).
+    
+- Testing on local VM with **dovecot-imapd** / **dovecot-pop3d** recommended for experimentation.
+
+# References 
+https://academy.hackthebox.com/module/112/section/1073
