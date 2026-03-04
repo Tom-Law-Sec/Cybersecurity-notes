@@ -1,0 +1,122 @@
+**Cloud Recon — The Passive Hunt**
+
+Cloud platforms like **AWS, Azure, GCP** are basically ubiquitous. Companies love them because:
+
+- Everything is centralized and accessible from anywhere
+    
+- Easy to scale services
+    
+- No on-prem headaches
+    
+
+…but **just because the cloud is secure by default doesn’t mean the company is secure.** Misconfigured buckets, blobs, or storage containers = open doors for an attacker.
+
+---
+
+## 1️ **Spot Company Cloud Assets**
+
+Start by checking DNS. Look for things like:
+
+`s3-website-us-west-2.amazonaws.com blob.core.windows.net storage.googleapis.com`
+
+These are often exposed because employees need easy access.
+
+Example from your scenario:
+
+`blog.inlanefreight.com 10.129.24.93 inlanefreight.com 10.129.27.33 matomo.inlanefreight.com 10.129.127.22 www.inlanefreight.com 10.129.127.33 s3-website-us-west-2.amazonaws.com 10.129.95.250`
+
+Notice that last one? That’s a classic AWS S3 bucket endpoint — potentially holding critical company files.
+
+---
+
+## 2️ **Google Dorking for Cloud Files**
+
+Google is your first reconnaissance friend here. Use queries to pinpoint company files stored in cloud storage:
+
+- **AWS:** `intext:[company name] inurl:amazonaws.com`
+    
+- **Azure:** `intext:[company name] inurl:blob.core.windows.net`
+    
+- **GCP:** `intext:[company name] inurl:storage.googleapis.com`
+    
+
+You can discover PDFs, spreadsheets, source code, and sometimes **critical secrets** if the bucket is public.
+
+---
+
+## 3️ **Inspect the Source Code**
+
+Sometimes files are linked from webpages:
+
+- JS, CSS, images, and PDFs often live in cloud storage to offload web servers
+    
+- Look for `<link rel="preconnect" href="...">` or `<link rel="dns-prefetch" href="...">` in HTML
+    
+- These can reveal storage endpoints you didn’t see in DNS
+    
+
+---
+
+## 4️ **Third-Party Tools**
+
+Tools like **Domain.Glass** and **GrayHatWarfare** let you:
+
+- Check cloud infrastructure
+    
+- See which buckets or blobs exist
+    
+- Filter by file type, company name, or abbreviation
+    
+
+They’re basically scanners for cloud storage without touching the target directly.
+
+---
+
+## 5️ **Watch Out for Leaks**
+
+Sometimes employees accidentally put **private files in public buckets**, like:
+
+- `.env` files
+    
+- PDFs with sensitive info
+    
+- SSH keys (`id_rsa` / `id_rsa.pub`)
+    
+
+Example scenario:
+
+`AWS S3 bucket exposed: contains id_rsa private key → Anyone could log into company machines if used`
+
+This is basically an open backdoor if left exposed.
+
+---
+
+## 6️ **Pro Tips**
+
+- Company abbreviations can be huge hints (`inlane`, `IF`, etc.)
+    
+- Always check metadata: last modified date, public access settings
+    
+- Combine with Google dorks + GrayHatWarfare for maximum coverage
+    
+- **Never touch third-party storage without permission** — stick to publicly indexed data
+    
+
+---
+
+**TL;DR:**
+
+1. **DNS check** → spot cloud endpoints
+    
+2. **Google Dorking** → find public files
+    
+3. **Source code** → follow hidden storage links
+    
+4. **Third-party tools** → GrayHatWarfare, Domain.Glass
+    
+5. **Look for accidental leaks** → PDFs, credentials, SSH keys
+    
+
+Bottom line: **cloud recon = low effort, high reward.** Most companies leave these doors slightly open just because humans make mistakes.
+# References 
+https://academy.hackthebox.com/module/112/section/106
