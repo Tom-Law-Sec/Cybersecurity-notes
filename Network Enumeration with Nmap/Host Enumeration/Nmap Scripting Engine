@@ -1,0 +1,194 @@
+# Nmap Scripting Engine
+NSE is basically Nmap saying:  
+_“Port scanning is cool, but what if I also ran mini-exploits, brute-forced creds, fingerprinted malware, enumerated users, found CVEs, AND made you breakfast?”_
+
+It uses **Lua scripts**, grouped into **14 categories**, each with its own vibe.
+
+Here’s the breakdown — clean, quick, and memorable:
+
+### 💡 NSE Categories (translated into real-human English)
+
+|Category|What it’s really doing|
+|---|---|
+|**auth**|Finds login creds or tests auth mechanisms.|
+|**broadcast**|Discovers hosts via broadcast packets.|
+|**brute**|Tries logins via brute force (don’t use on fragile things).|
+|**default**|Runs when you use `-sC` or `-A` — “safe-ish basics.”|
+|**discovery**|Enumerates services deeper than default scans.|
+|**dos**|Tests DoS weaknesses — kinda spicy, rarely used.|
+|**exploit**|Tries actual exploitation of known vulns.|
+|**external**|Talks to third-party services/APIs.|
+|**fuzzer**|Sends weird packets to see what breaks.|
+|**intrusive**|Could crash stuff — use only if you accept chaos.|
+|**malware**|Checks for malware fingerprints.|
+|**safe**|The wholesome scripts — no harmful touches.|
+|**version**|Helps identify service versions.|
+|**vuln**|Checks for known CVEs and security issues.|
+
+---
+
+# 🎮 How to Actually Use NSE
+
+### ✔️ Run default scripts
+
+`-sC` is the “starter pack” of safe detection:
+
+`sudo nmap <target> -sC`
+
+### ✔️ Run an entire category
+
+Useful when you're in “let’s find literally every vuln possible” mode:
+
+`sudo nmap <target> --script vuln`
+
+### ✔️ Run specific scripts
+
+Comma-separated, zero fluff:
+
+`sudo nmap <target> --script banner,smtp-commands`
+
+---
+
+# 📬 Example: Targeting SMTP on Port 25
+
+Command:
+
+`sudo nmap 10.129.2.28 -p 25 --script banner,smtp-commands`
+
+Results give you:
+
+- **Banner info** → "Postfix (Ubuntu)"
+    
+- **Allowed SMTP commands** → VRFY, ETRN, STARTTLS, etc.
+    
+
+Why this matters:
+
+- Banners = version clues
+    
+- VRFY/EXPN/etc = username enumeration potential
+    
+- STARTTLS = maybe downgrade attacks
+    
+- OS fingerprint = tighter exploit selection
+    
+
+---
+
+# ⚙️ Aggressive Mode (-A):
+
+aka **“Nmap on Monster Energy.”**
+
+`sudo nmap 10.129.2.28 -p 80 -A`
+
+What you instantly get:
+
+- Service versions (`-sV`)
+    
+- OS detection (`-O`)
+    
+- Default scripts (`-sC`)
+    
+- Traceroute
+    
+- Webserver headers
+    
+- Web app frameworks (WordPress detected!)
+    
+- Page title
+    
+- Sometimes CVE-relevant metadata
+    
+
+It’s loud. It’s fast. It’s borderline rude.  
+But damn, it’s thorough.
+
+---
+
+# 🛡️ Vuln Scanning with NSE
+
+This is where you become the threat.
+
+`sudo nmap 10.129.2.28 -p 80 -sV --script vuln`
+
+This will:
+
+- enumerate WordPress paths
+    
+- gather version numbers
+    
+- detect outdated files
+    
+- pull usernames
+    
+- check CVEs via `vulners`
+    
+- run light XSS checks
+    
+- find misconfigurations
+    
+- reveal interesting files
+    
+
+Actual example output you saw:
+
+- WordPress 5.3.4
+    
+- Multiple legacy WP assets (v2.2 → v2.7 version drift)
+    
+- Username: `admin`
+    
+- Apache 2.4.29 CVEs: CVE-2019-0211, CVE-2018-1312, etc.
+    
+
+It’s basically doing free mini-pen-testing for you.
+
+---
+
+# 🧠 Why NSE Is a Big Deal
+
+Because it turns Nmap from “port scanner” into:
+
+- vuln scanner
+    
+- CMS enumerator
+    
+- brute-forcer
+    
+- fingerprinting toolkit
+    
+- malware detector
+    
+- exploit helper
+    
+- automation framework
+    
+
+And all you have to do is call the right script.
+
+---
+
+# ⚡ Quick NSE Cheat Sheet (for your mental RAM)
+
+### Default enumeration
+
+`nmap <target> -sC -sV`
+
+### Run vuln checks
+
+`nmap <target> --script vuln`
+
+### Script categories
+
+`nmap <target> --script <category>`
+
+### Specific scripts
+
+`nmap <target> --script banner,http-enum,vulners`
+
+### Aggressive mode
+
+`nmap -A <target>`
+
+# References 
+https://academy.hackthebox.com/module/19/section/108
