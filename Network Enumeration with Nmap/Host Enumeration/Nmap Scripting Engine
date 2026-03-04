@@ -6,7 +6,7 @@ It uses **Lua scripts**, grouped into **14 categories**, each with its own vibe.
 
 Here’s the breakdown — clean, quick, and memorable:
 
-### 💡 NSE Categories (translated into real-human English)
+###  NSE Categories (translated into real-human English)
 
 |Category|What it’s really doing|
 |---|---|
@@ -27,21 +27,21 @@ Here’s the breakdown — clean, quick, and memorable:
 
 ---
 
-# 🎮 How to Actually Use NSE
+#  How to Actually Use NSE
 
-### ✔️ Run default scripts
+###  Run default scripts
 
 `-sC` is the “starter pack” of safe detection:
 
 `sudo nmap <target> -sC`
 
-### ✔️ Run an entire category
+###  Run an entire category
 
 Useful when you're in “let’s find literally every vuln possible” mode:
 
 `sudo nmap <target> --script vuln`
 
-### ✔️ Run specific scripts
+###  Run specific scripts
 
 Comma-separated, zero fluff:
 
@@ -49,7 +49,7 @@ Comma-separated, zero fluff:
 
 ---
 
-# 📬 Example: Targeting SMTP on Port 25
+#  Example: Targeting SMTP on Port 25
 
 Command:
 
@@ -105,7 +105,7 @@ But damn, it’s thorough.
 
 ---
 
-# 🛡️ Vuln Scanning with NSE
+#  Vuln Scanning with NSE
 
 This is where you become the threat.
 
@@ -168,7 +168,7 @@ And all you have to do is call the right script.
 
 ---
 
-# ⚡ Quick NSE Cheat Sheet (for your mental RAM)
+#  Quick NSE Cheat Sheet (for your mental RAM)
 
 ### Default enumeration
 
