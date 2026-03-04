@@ -1,0 +1,75 @@
+# FTP
+
+## 1️ FTP Basics Recap
+
+- **Ports:** Control → 21, Data → 20
+    
+- **Modes:** Active (server connects back) / Passive (client initiates both)
+    
+- **Security:** Plaintext by default → sniffable; use FTPS/SFTP for encryption
+    
+- **Anonymous FTP:** Possible if `anonymous_enable=YES`
+    
+
+---
+
+## 2️ vsFTPd Default Configuration
+
+`sudo apt install vsftpd  # Check config cat /etc/vsftpd.conf | grep -v "#"  # Key settings listen=NO listen_ipv6=YES anonymous_enable=NO local_enable=YES write_enable=YES chroot_local_user=YES hide_ids=YES ls_recurse_enable=YES`
+
+**Deny users:** `/etc/ftpusers`
+
+`guest john kevin`
+
+---
+
+## 3 Enumerating FTP
+
+`ftp <ip>             # Connect to FTP ls                   # List files ls -R                # Recursive directory listing get <file>           # Download file put <file>           # Upload file (if allowed) status               # Show connection status debug                # Debug info trace                # Packet trace`
+
+**Recursive mirror with wget:**
+
+`wget -m --no-passive ftp://anonymous:anonymous@<ip>`
+
+---
+
+## 4️ Nmap for FTP Enumeration
+
+`sudo nmap -sV -p21 -sC -A 10.129.14.136 sudo nmap --script-updatedb sudo nmap -sV -p21 -sC -A 10.129.14.136 --script-trace`
+
+**Useful NSE scripts:**
+
+`ftp-anon.nse       # Check anonymous login ftp-syst.nse       # Server system info ftp-vsftpd-backdoor.nse ftp-brute.nse      # Brute-force credentials`
+
+---
+
+## 5️ Practical Exploitation Ideas
+
+- Anonymous login → list/download files (`ls`, `get`)
+    
+- Writable directories → upload files (`put`) → possible reverse shell if synced with webserver
+    
+- Recursive listing → map directory structure (`ls -R`)
+    
+- SSL check → extract hostnames/email addresses
+    
+
+`openssl s_client -connect <ip>:21 -starttls ftp`
+
+---
+
+## 6️ Security Insights
+
+- `hide_ids=YES` masks user IDs
+    
+- Writable anonymous directories are risky
+    
+- Fail2ban or similar tools mitigate brute-force attacks
+    
+- Recursive download gives full directory overview
+    
+
+---
+
+# References 
+https://academy.hackthebox.com/module/112/section/1066
