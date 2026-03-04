@@ -1,0 +1,139 @@
+# **Windows Remote Management – Notes**
+
+## **General**
+
+- Windows servers can be managed locally or remotely.
+    
+- Remote management is enabled by default starting with Windows Server 2016.
+    
+- Uses WS-Management protocol + hardware diagnostics + BMC controllers + COM API for scripting.
+    
+
+## **Main Remote Management Components**
+
+- **RDP (Remote Desktop Protocol)**
+    
+- **WinRM (Windows Remote Management)**
+    
+- **WMI (Windows Management Instrumentation)**
+    
+
+---
+
+# **RDP**
+
+## **Overview**
+
+- Microsoft protocol for remote GUI access.
+    
+- Runs over TCP **3389** (and optionally UDP 3389).
+    
+- Requires firewall + NAT port forwarding (if applicable).
+    
+- Supports TLS since Windows Vista, but many systems still allow weak encryption.
+    
+- Certificates are self‑signed → clients often show warnings.
+    
+- NLA (Network Level Authentication) usually required by default on servers.
+    
+
+## **Footprinting**
+
+- Nmap can enumerate RDP security layers, hostname, version, NLA state.
+    
+
+**Nmap scan example (code left unchanged):**
+
+`nmap -sV -sC 10.129.201.248 -p3389 --script rdp* ...`
+
+- `--packet-trace` exposes RDP cookies (like `mstshash=nmap`) which can flag defensive tools.
+    
+
+**Example (left unchanged):**
+
+`nmap -sV -sC 10.129.201.248 -p3389 --packet-trace --disable-arp-ping -n ...`
+
+## **RDP Security Enumeration**
+
+- Cisco’s `rdp-sec-check.pl` identifies security settings without authentication.
+    
+
+**Installation + usage (unchanged):**
+
+`sudo cpan ... git clone https://github.com/CiscoCXSecurity/rdp-sec-check.git ... ./rdp-sec-check.pl 10.129.201.248`
+
+## **Connecting to RDP**
+
+- Linux tools: `xfreerdp`, `rdesktop`, Remmina.
+    
+
+**Example session (unchanged):**
+
+`xfreerdp /u:cry0l1t3 /p:"P455w0rd!" /v:10.129.201.248 ...`
+
+---
+
+# **WinRM (Windows Remote Management)**
+
+## **Overview**
+
+- Command‑line–focused remote management.
+    
+- Uses SOAP over HTTP/HTTPS.
+    
+- Ports: **5985 (HTTP)** and **5986 (HTTPS)**.
+    
+- Enabled by default on Windows Server 2012+.
+    
+- Required for remote PowerShell sessions and event log management.
+    
+
+## **Footprinting**
+
+- Scan ports 5985/5986 via Nmap.
+    
+
+**Example (unchanged):**
+
+`nmap -sV -sC 10.129.201.248 -p5985,5986 --disable-arp-ping -n ...`
+
+- On Windows: `Test-WsMan`
+    
+- On Linux: `evil-winrm`
+    
+
+**Example:**
+
+`evil-winrm -i 10.129.201.248 -u Cry0l1t3 -p P455w0rD!`
+
+---
+
+# **WMI (Windows Management Instrumentation)**
+
+## **Overview**
+
+- Microsoft’s implementation of CIM/WBEM.
+    
+- Allows reading/writing nearly all system settings.
+    
+- Access via PowerShell, VBScript, or WMIC.
+    
+- Critical for administration and monitoring.
+    
+
+## **Footprinting**
+
+- Initial connection over **TCP 135**, then shifts to a random port.
+    
+- Tools: Impacket’s `wmiexec.py`
+    
+
+**Example:**
+
+`/usr/share/doc/python3-impacket/examples/wmiexec.py Cry0l1t3:"P455w0rD!"@10.129.201.248 "hostname"`
+
+---
+
+# **Final Note**
+
+Hands‑on practice with a Windows Server VM beats reading. Try changing configs and rescanning to see how each service behaves.
