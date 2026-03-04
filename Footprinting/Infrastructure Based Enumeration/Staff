@@ -1,0 +1,75 @@
+# Staff
+
+**Employee Recon via Social Media**
+
+Social media, especially **LinkedIn, Xing, and GitHub**, is a goldmine for passive info gathering. Here’s the breakdown:
+
+---
+
+## 1️ **LinkedIn Job Posts**
+
+Even without seeing employees, **job postings tell you what the company uses internally**. For example:
+
+From your snippet:
+
+- **Languages:** Java, C#, C++, Python, Ruby, PHP, Perl
+    
+- **Databases:** PostgreSQL, MySQL, SQL Server, Oracle
+    
+- **Frameworks:** Flask, Django, Spring, ASP.NET MVC
+    
+- **Other tools:** Git, SVN, Mercurial, Perforce, Atlassian Suite (Jira, Confluence, Bitbucket), Docker/Kubernetes, Redis, NumPy
+    
+- **Security practices:** SOA, microservices, CI/CD
+    
+
+ Insight: By seeing the tech stack requirements, you can predict where potential vulnerabilities might exist. For example, if they use Django or Flask, you can focus on common web misconfigurations there.
+
+---
+
+## 2️ **LinkedIn Employee Profiles**
+
+Profiles can reveal:
+
+- **Projects & responsibilities:** e.g., CRM app development, BrokerVotes system
+    
+- **Skills:** React, AngularJS, Svelte, Elastic, Kafka
+    
+- **Certifications:** Security+, cloud certifications, etc.
+    
+- **GitHub links:** Public repos may accidentally leak secrets (JWTs, API keys, internal scripts)
+    
+
+Example: An employee shares a Flask/Django project on GitHub with **hardcoded JWT tokens or private emails**. Boom — instant entry points.
+
+ Insight: Check which employees are in **security roles**; they hint at the defenses the company prioritizes. Devs reveal **active tech and potential weak spots**.
+
+---
+
+## 3️ **Patterns & Indirect Info**
+
+- **Abbreviations in projects or repos** → useful for cloud recon (bucket names, storage endpoints)
+    
+- **Skills & frameworks listed** → tell you which configurations, common libraries, and APIs might exist
+    
+- **Job postings + profile history** → you can map **team structure**, who owns what system, and what platforms are high-value targets
+    
+
+---
+
+## 4️ **Practical Takeaways**
+
+1. **Focus on devs & security teams** for tech mapping
+    
+2. **Look for GitHub/portfolio links** for accidental sensitive info
+    
+3. **Job postings give stack & tools** without ever talking to anyone
+    
+4. **Track patterns in technologies** to anticipate misconfigurations (Flask/Django → OWASP Top10, Docker → exposed containers)
+    
+5. **Emails & JWTs in public repos** → potential for lateral movement
+    
+
+---
+
+**TL;DR:** Social media is basically a “map of the company’s brain.” Job posts tell you what they use, employee posts tell you what they actually do, and repos can sometimes literally hand you keys to the castle.
