@@ -1,0 +1,226 @@
+# Firewall and IDS,IPS Evasion
+
+##  Big Picture: _Evading Firewalls & IDS/IPS with Nmap_
+
+Nmap isn’t just a “scan some ports” tool — it’s the Swiss Army knife of “hey let me sneak past your defenses real quick.” Firewalls choke off traffic, IDS watches traffic, IPS _murders_ your traffic. Your job? Getting around all that without getting insta-blocked.
+
+Below is the digestible summary of all those methods — how they work, why they work, and when to use them.
+
+---
+
+#  Firewalls 101
+
+Firewalls basically:
+
+- **DROP**: throw packets in the trash silently
+    
+- **REJECT**: send back ICMP or TCP RST saying “nah fam, don’t.”
+    
+
+This is why Nmap shows:
+
+- **filtered** → packets disappeared, spooky
+    
+- **closed/open** → got actual responses
+    
+
+---
+
+# 👀 IDS/IPS 101
+
+- **IDS** = tattletale. Reports suspicious stuff.
+    
+- **IPS** = tattletale with aggression. Actively blocks you.
+    
+
+They use signatures + patterns (like “oh, that’s a SYN scan from ChatGPT’s guy Tom”).  
+So the whole game is: **look normal**, blend in, be boring.
+
+---
+
+#  Technique 1: ACK Scanning (-sA)
+
+### Why it works
+
+Firewalls usually block inbound SYN packets, but ACK packets?  
+They can't easily tell whether they’re part of an existing connection or not.  
+So ACK often slips through.
+
+### What you get
+
+- **RST = unfiltered**
+    
+- **No response = filtered**
+    
+
+It doesn’t tell you open/closed; it tells you _whether the firewall is playing goalie_.
+
+Perfect for:
+
+- mapping firewall rules
+    
+- understanding filtering paths
+    
+- identifying stateful vs stateless filtering
+    
+
+---
+
+#  Technique 2: Decoys (-D)
+
+Think of it as showing up to a party with 5 people wearing the same outfit.  
+You just have to hope the bouncer guesses the wrong one.
+
+### How it works:
+
+Nmap spoofs many fake IPs as additional “sources,” and yours is randomly mixed in.
+
+Example:
+
+`-D RND:5`
+
+Generates 5 random IPs + you somewhere in the pack.
+
+BUT — beware:
+
+- Dead decoys can trigger SYN flood defenses
+    
+- Some networks drop spoofed packets
+    
+- Smart IDS can still spot your true source if timing differs
+    
+
+Still great to:
+
+- confuse IPS
+    
+- bypass IP-based blocking
+    
+- throw off log analysis
+    
+
+---
+
+#  Technique 3: Fake Source IP (-S)
+
+This is straight-up source IP spoofing.  
+Useful for checking:
+
+- “Is this subnet allowed through the firewall?”
+    
+- “Can I impersonate another internal host?”
+    
+- “Will a firewall behave differently toward internal IPs?”
+    
+
+You MUST specify the network interface with `-e`, or Nmap loses its mind.
+
+---
+
+#  Technique 4: DNS Proxying / Port 53 Abuse
+
+Admins often allow DNS traffic because… well, everything needs DNS.
+
+Nmap can use port 53 as its **source port** — this is _extremely_ sneaky:
+
+`--source-port 53`
+
+Why it works:  
+Many firewalls blindly trust packets coming from port 53.  
+Many IDS rules don’t analyze DNS TCP traffic deeply.
+
+Instant stealth-mode.
+
+---
+
+#  Technique 5: Fragmentation (-f)
+
+You didn’t include it in your text but it’s part of this topic, so here’s the quick hit:
+
+`-f`
+
+Breaks packets into tiny fragments that confuse basic firewalls and dumb IDS.
+
+Downside:  
+Modern systems can reassemble fragments.  
+This technique is very 2001-hacker-movie.
+
+---
+
+#  Technique 6: Playing With Timing (-T sets)
+
+Timing = your noise level.  
+0 → paranoid gremlin  
+5 → raccoon on Red Bull
+
+IPS loves people scanning too fast.  
+Firewalls love blocking bursts.
+
+Choosing the right timing is basically:
+
+- Don’t go insane unless you’re on a clean test environment
+    
+- In a real network, use **T2 polite** or **T1 sneaky**
+    
+
+---
+
+#  Technique 7: Packet Rate Tweaking
+
+Use:
+
+- `--min-rate`
+    
+- `--max-retries`
+    
+- `--initial-rtt-timeout`
+    
+
+These can go **too fast**, which means…  
+Yeah, you miss hosts, you miss ports, and you ruin your own day.
+
+Speed ≠ accuracy. Balance is key.
+
+---
+
+#  Technique 8: Quiet Enumeration to Detect IPS
+
+If one VPS gets blocked mid-scan, congrats, you poked a sleeping IPS and it woke up cranky.
+
+Do NOT keep scanning from the same IP.  
+Swap to a new VPS, reduce timing, use decoys, spread your probes out.
+
+---
+
+# Putting It All Together
+
+When facing firewall/IDS/IPS protection, a typical approach is:
+
+### **1. Test if traffic is filtered**
+
+- `-sS`
+    
+- `-sA`
+    
+
+### **2. Check which source ports are allowed**
+
+`--source-port 53 --source-port 20`
+
+### **3. Try decoys if IP-based filtering is suspected**
+
+`-D RND:10`
+
+### **4. Spoof internal hosts if allowed**
+
+`-S <internal-IP> -e tun0`
+
+### **5. Slow down so IPS doesn’t smack you**
+
+`-T1 --max-rate 50`
+
+### **6. If all else fails: fragment**
+
+`-f -f`
+# References 
+https://academy.hackthebox.com/module/19/section/106
