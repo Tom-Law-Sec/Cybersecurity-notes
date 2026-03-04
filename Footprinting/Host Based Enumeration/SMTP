@@ -1,0 +1,108 @@
+### **SMTP Basics**
+
+- **Purpose:** Send emails between clients and servers or between servers themselves.
+    
+- **Ports:**
+    
+    - `25` → traditional SMTP server-to-server communication
+        
+    - `587` → message submission from authenticated clients (`STARTTLS` often used here)
+        
+    - `465` → legacy SMTPS, fully encrypted
+        
+- **Encryption:** SMTP is plaintext by default. Modern servers use **TLS** via `STARTTLS` to secure credentials and email content.
+    
+- **Components:**
+    
+    - **MUA (Mail User Agent):** Email client (Outlook, Thunderbird, CLI `sendmail`)
+        
+    - **MSA (Mail Submission Agent):** First hop server; validates the sender
+        
+    - **MTA (Mail Transfer Agent):** Routes mail to recipient’s server; checks spam, size, etc.
+        
+    - **MDA (Mail Delivery Agent):** Places mail into recipient mailbox (IMAP/POP3)
+        
+
+**Flow:**  
+`Client (MUA) → MSA → MTA → MDA → Mailbox`
+
+---
+
+### **Common Commands**
+
+|Command|Function|
+|---|---|
+|`HELO/EHLO`|Starts session and identifies client|
+|`MAIL FROM:`|Sender address|
+|`RCPT TO:`|Recipient address|
+|`DATA`|Begins message body|
+|`RSET`|Abort mail but keep connection|
+|`VRFY`|Verify existence of mailbox|
+|`EXPN`|Expand mailing list|
+|`NOOP`|Keep connection alive|
+|`QUIT`|End session|
+
+---
+
+### **Default/Postfix Configuration**
+
+- `mynetworks = 127.0.0.0/8 10.129.0.0/16` → allowed client ranges
+    
+- `smtpd_helo_restrictions = reject_invalid_hostname` → basic validation
+    
+- `home_mailbox = /home/postfix` → user mail storage location
+    
+
+**Dangerous settings:**
+
+- `mynetworks = 0.0.0.0/0` → open relay. Any IP can send email through your server → spam/malware risk.
+    
+
+---
+
+### **Pentesting & Enumeration**
+
+1. **Check supported commands:** `EHLO <server>` lists extensions like PIPELINING, SIZE, VRFY, 8BITMIME, DSN.
+    
+2. **Verify users:** `VRFY <username>` can sometimes enumerate valid mail accounts (but some servers always return “252” to hide users).
+    
+3. **Send test email via CLI/telnet:**
+    
+    `HELO domain.com MAIL FROM:<user@domain.com> RCPT TO:<target@domain.com> DATA Subject: Test Body . QUIT`
+    
+4. **Open relay detection:** Use Nmap script `smtp-open-relay` to see if the server accepts mail from arbitrary sources.
+    
+    - If open, server can be abused to send spam or spoof emails.
+        
+
+**Example from your scan:**
+
+`smtp-open-relay: Server is an open relay (16/16 tests)`
+
+This means literally anyone can send mail through that SMTP server without authentication—huge misconfiguration.
+
+---
+
+### **Security Considerations**
+
+- Always enforce **authentication** (`AUTH PLAIN` over TLS).
+    
+- Limit `mynetworks` to trusted IPs only.
+    
+- Disable `VRFY/EXPN` or obfuscate responses to avoid user enumeration.
+    
+- Monitor relay logs to detect abuse.
+    
+
+---
+
+SMTP is deceptively simple on the surface, but a misconfigured server is basically a free spam cannon. From pentesting perspective, the big wins are:
+
+1. Open relay checks
+    
+2. User enumeration (`VRFY`)
+    
+3. Command and extension enumeration (`EHLO`)
+
+# References 
+https://academy.hackthebox.com/module/112/section/1072
