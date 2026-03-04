@@ -1,0 +1,149 @@
+# Host and Port Scanning
+
+## **Nmap Host Discovery — Notes**
+
+### **Why Host Discovery Matters**
+
+- First step in internal pentesting: figure out which systems are _actually online_.
+    
+- ICMP echo requests (ping) are usually the most effective discovery method.
+    
+- Save _every_ scan — helps with comparisons, reporting, and catching inconsistent tool behavior.
+    
+
+---
+
+## **Scanning a Network Range**
+
+**Example:**
+
+`sudo nmap 10.129.2.0/24 -sn -oA tnet`
+
+**Options:**
+
+- `10.129.2.0/24` → target range
+    
+- `-sn` → disable port scan (ping sweep only)
+    
+- `-oA tnet` → save all formats (Nmap, XML, Grepable)
+    
+
+**Notes:**
+
+- Only works if hosts allow ICMP.
+    
+- ICMP-blocked hosts may incorrectly appear “offline.”
+    
+
+---
+
+## **Scanning an IP List**
+
+**`hosts.lst` example:**
+
+`10.129.2.4 10.129.2.10 ...`
+
+**Command:**
+
+`sudo nmap -sn -oA tnet -iL hosts.lst`
+
+**Options:**
+
+- `-iL` → load targets from a list
+    
+- Behaves the same as range scanning
+    
+- Non-responders might be alive but blocking ICMP
+    
+
+---
+
+## **Scanning Multiple IPs**
+
+### **Individual IPs:**
+
+`sudo nmap -sn -oA tnet 10.129.2.18 10.129.2.19 10.129.2.20`
+
+### **Adjacent range:**
+
+`sudo nmap -sn -oA tnet 10.129.2.18-20`
+
+---
+
+## **Scanning a Single Host**
+
+**Command:**
+
+`sudo nmap 10.129.2.18 -sn -oA host`
+
+**Options:**
+
+- `-sn` → ping only
+    
+- Output includes latency + MAC address if found
+    
+
+**Important detail:**  
+Nmap uses **ARP first** on local networks.
+
+- If ARP responds → Nmap marks the host “up” even without ICMP.
+    
+
+---
+
+## **Forcing ICMP Echo Requests**
+
+Use:
+
+`-PE`
+
+Example with packet trace:
+
+`sudo nmap 10.129.2.18 -sn -oA host -PE --packet-trace`
+
+Shows ARP traffic still happening first.
+
+---
+
+## **Why a Host Is Marked Alive**
+
+Use:
+
+`--reason`
+
+Example:
+
+`sudo nmap 10.129.2.18 -sn -oA host -PE --reason`
+
+Reveals ARP response as the reason the host is considered “up.”
+
+---
+
+## **Disabling ARP Ping**
+
+If you want _only_ ICMP:
+
+`sudo nmap 10.129.2.18 -sn -oA host -PE --packet-trace --disable-arp-ping`
+
+This forces:
+
+- ICMP Echo Request → ICMP Echo Reply
+    
+- No ARP involved
+    
+
+---
+
+## **Takeaways**
+
+- Firewall rules heavily influence host discovery accuracy.
+    
+- ARP pings take priority on local networks unless manually disabled.
+    
+- ICMP response behavior (TTL, timing) can hint at OS.
+    
+- Always store results for comparison and documentation.
+    
+- More techniques available in Nmap’s official host-discovery guide.
+# References 
+https://academy.hackthebox.com/module/19/section/102
