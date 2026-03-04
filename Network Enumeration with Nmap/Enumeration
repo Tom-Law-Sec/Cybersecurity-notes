@@ -1,0 +1,174 @@
+ Enumeration
+
+### **Enumeration — Core Ideas**
+
+- Enumeration is the _most important_ phase in hacking/pentesting.
+    
+- Goal isn’t just breaking in — it’s finding _every possible way_ **you could** break in.
+    
+- Tools ≠ magic. They only matter if you know how to interpret their output.
+    
+- Real skill comes from understanding services, protocols, and interacting with them manually.
+    
+
+---
+
+### **Why Enumeration Matters**
+
+- More info = easier path to an attack vector.
+    
+- Understanding how services work + learning their syntax = effective interaction.
+    
+- Helps you adapt new info to what you already know.
+    
+- Most breakthroughs come from misconfigurations or weak security practices.
+    
+
+---
+
+### **Analogy (Finding the Keys)**
+
+- Vague info (“in the living room”) → hard to find the target.
+    
+- Specific info (“white shelf → next to the TV → third drawer”) → way faster.
+    
+- Enumeration = getting the “third drawer” version of information.
+    
+
+---
+
+### **Two Kinds of Useful Findings**
+
+1. **Functions/resources** you can interact with or that reveal info.
+    
+2. **Information** that leads to _more_ important information.
+    
+
+---
+
+### **Common Pitfalls**
+
+- People blame lack of tools, but the real issue is lack of understanding.
+    
+- Manual enumeration is essential — tools can’t always bypass service-level defenses.
+    
+- Learning how a service works saves hours or even days.
+    
+
+---
+
+### **Nmap Overview**
+
+- Network analysis & security auditing tool (C, C++, Python, Lua).
+    
+- Identifies:
+    
+    - Live hosts
+        
+    - Services + versions
+        
+    - Operating systems
+        
+    - Firewalls/IDS behavior
+        
+- Heavy use cases:
+    
+    - Security auditing
+        
+    - Pentesting
+        
+    - Firewall/IDS validation
+        
+    - Network mapping
+        
+    - Open port identification
+        
+    - Vulnerability assessment
+        
+
+---
+
+### **Nmap Architecture / Scan Types**
+
+- **Host discovery**
+    
+- **Port scanning**
+    
+- **Service enumeration/detection**
+    
+- **OS detection**
+    
+- **Nmap Scripting Engine (NSE)**
+    
+
+---
+
+### **Basic Syntax**
+
+`nmap <scan types> <options> <target>`
+
+---
+
+### **Scan Techniques (Highlights)**
+
+- **TCP SYN/Connect/ACK/Window/Maimon** → `-sS`, `-sT`, `sA`, `sW`, `sM`
+    
+- **UDP scan** → `-sU`
+    
+- **Null/FIN/Xmas** → `-sN`, `-sF`, `-sX`
+    
+- **Custom flags** → `--scanflags`
+    
+- **Idle scan** → `-sI`
+    
+- **SCTP scans** → `-sY`, `-sZ`
+    
+- **IP protocol scan** → `-sO`
+    
+- **FTP bounce** → `-b`
+    
+
+---
+
+### **TCP SYN Scan (`-sS`) — Key Points**
+
+- Default & super common because it's fast (thousands of ports/sec).
+    
+- Doesn’t complete the 3-way handshake → “half-open” scan.
+    
+- Responses:
+    
+    - **SYN-ACK** → port open
+        
+    - **RST** → port closed
+        
+    - **No response** → filtered by firewall
+        
+
+---
+
+### **Example Output (Summary)**
+
+Running:
+
+`sudo nmap -sS localhost`
+
+Findings:
+
+- Host is up
+    
+- 4 open ports:
+    
+    - 22 → SSH
+        
+    - 80 → HTTP
+        
+    - 5432 → PostgreSQL
+        
+    - 5901 → VNC
+
+
+# References 
+
+https://academy.hackthebox.com/module/19/section/99
+https://academy.hackthebox.com/module/19/section/100
