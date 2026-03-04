@@ -1,0 +1,274 @@
+ **Passive Domain Recon — The “Creep On Them Without Touching Them” Phase**
+
+This is the part of a pentest where you act like a curious customer instead of a loud scanner goblin. No packets fired directly at the target. No “Nmap -A” nonsense. Just vibes and OSINT.
+
+The entire mission here:  
+**Understand what the company is, what services it runs, what tech supports those services, and how the infrastructure fits together — without alerting anyone.**
+
+---
+
+#  **1. Start With the Website — Always**
+
+Yes, the homepage.  
+Sounds basic, but it’s literally a goldmine.
+
+Look at:
+
+- What services they offer
+    
+- What tech those services _normally require_
+    
+- Hints about backend stacks
+    
+- Terminology unique to their field
+    
+- Platforms they likely rely on
+    
+
+**You’re doing two things at once:**
+
+###  Principle 1: Pay attention to what’s visible
+
+→ Services, product offerings, integrations.
+
+###  Principle 2: Pay attention to what’s _not_ visible
+
+→ Backend systems required to make those services work.
+
+Example:
+
+> They offer IoT services? → Expect MQTT brokers, cloud dashboards, mobile APIs, firmware update servers.  
+> They offer app dev? → CI/CD platforms, Git hosting, test environments, staging servers.
+
+This mindset basically turns you into the developer sitting behind the curtain.
+
+---
+
+#  **2. Map Their Online Presence**
+
+You’re doing a black-box test. No internal access. Just the scope and your brain.
+
+Start with **what they expose to the public internet**, then branch out.
+
+---
+
+#  3. Check the SSL Certificate
+
+SSL certs are _basically free subdomain leaks_.
+
+A single cert might contain:
+
+- main domain
+    
+- www
+    
+- API endpoints
+    
+- support portals
+    
+- forgotten dev systems (chefs kiss)
+    
+
+Example:
+
+`DNS names: inlanefreight.htb www.inlanefreight.htb support.inlanefreight.htb`
+
+If it’s on the cert, it’s probably alive somewhere.
+
+---
+
+#  **4. Certificate Transparency Logs (crt.sh)**
+
+This is where the real treasure is.
+
+Why it matters:
+
+- All CAs must log every certificate publicly
+    
+- Companies accidentally leak internal subdomains there _constantly_
+    
+
+Use:
+
+`https://crt.sh/?q=inlanefreight.com`
+
+Or JSON for automation:
+
+`curl -s "https://crt.sh/?q=inlanefreight.com&output=json" | jq .`
+
+Then clean it:
+
+`... | sort -u`
+
+What you get:
+
+- matomo.inlanefreight.com
+    
+- shop.inlanefreight.com
+    
+- iot.inlanefreight.com
+    
+- preview.*
+    
+- dev.*
+    
+- staging.*
+    
+- test.*
+    
+
+**This is basically an attack surface vending machine.**
+
+---
+
+#  5. Figure Out Which Hosts _They_ Control
+
+You’re only allowed to test hosts the company owns.  
+Third-party providers? Nope. Instant “you’re fired” territory.
+
+Use `host` to check which subdomains point to in-scope IP ranges:
+
+`host blog.inlanefreight.com`
+
+Filter only the in-scope provider:
+
+`grep inlanefreight.com`
+
+This gives you:
+
+- blog → internal IP
+    
+- www → internal IP
+    
+- matomo → internal IP
+    
+- s3-website-region.amazonaws.com → **nope, belongs to AWS**
+    
+
+So you build an IP list out of only what’s safe to touch.
+
+---
+
+#  6. Throw the IPs Into Shodan
+
+Shodan is basically the Google of things that should not be online.
+
+Loop the IPs:
+
+`shodan host <ip>`
+
+What you learn:
+
+- Open ports
+    
+- Banner leaks
+    
+- SSL configs
+    
+- Tech stack
+    
+- Potentially exposed services (SMTP, DNS, Apache admin panels, etc.)
+    
+
+This is where you often catch:
+
+- outdated Apache
+    
+- exposed mail servers
+    
+- random port 444 apps
+    
+- weird IoT dashboards
+    
+
+If you’re lucky?  
+Devices that should never be on the open internet.
+
+---
+
+#  7. Check DNS Records (dig ANY)
+
+This tells you:
+
+- A records → IP → targets
+    
+- MX → mail provider
+    
+- NS → hosting provider
+    
+- TXT → verification blobs
+    
+- SPF → email infra
+    
+- DKIM/DMARC clues
+    
+- Weird vendor integrations
+    
+
+Example goodies:
+
+- Google-site-verification
+    
+- Atlassian verification → dev stack
+    
+- Mailgun keys → API targets
+    
+- LogMeIn verification → remote access exposure
+    
+- SPF listing internal IPs → more targets
+    
+
+TXT records often leak **vendors + services** they rely on.
+
+Those vendors = new areas to investigate:
+
+- Google → shared drives, misconfigurations
+    
+- Atlassian → Jira/Confluence leaks
+    
+- LogMeIn → remote-access risk
+    
+- Mailgun → API abuse potential
+    
+- Outlook/Azure → storage buckets, OneDrive links, blob storage
+    
+
+---
+
+#  8. What We Learn From All This
+
+Here's the distilled version:
+
+###  Direct intel:
+
+- Subdomains
+    
+- Internal IPs
+    
+- Open ports
+    
+- Third-party platforms
+    
+- Mail infrastructure
+    
+- Verification IDs
+    
+- API providers
+    
+
+###  Indirect intel:
+
+- Development stack
+    
+- CI/CD pipelines
+    
+- Possible remote access solutions
+    
+- Cloud providers
+    
+- Potential weak points
+    
+
+This is why passive recon is **not optional** — it feeds your entire active recon phase.
+# References 
+https://academy.hackthebox.com/module/112/section/1061
