@@ -1,0 +1,106 @@
+# SMB
+
+## 1️ SMB Overview
+
+- SMB = network file/resource sharing protocol.
+    
+- Windows → native support; Samba → Linux/Unix implementation (SMB/CIFS).
+    
+- Ports:
+    
+    - SMB1/CIFS → TCP 137,138,139
+        
+    - SMB2/3 → TCP 445
+        
+- ACLs govern access (read, write, execute) per share.
+    
+
+---
+
+## 2️ Samba Basics
+
+- Key daemons: `smbd` (file/print services), `nmbd` (NetBIOS/IPC).
+    
+- Samba can act as:
+    
+    - Standalone server
+        
+    - Active Directory domain member
+        
+    - Domain controller (Samba 4+)
+        
+- Workgroups organize SMB hosts.
+    
+
+---
+
+## 3️ Default Samba Config Example
+
+`[global] workgroup = DEV.INFREIGHT.HTB server string = DEVSMB log file = /var/log/samba/log.%m max log size = 1000 map to guest = bad user usershare allow guests = yes  [printers] comment = All Printers path = /var/spool/samba printable = yes guest ok = no read only = yes create mask = 0700  [print$] comment = Printer Drivers path = /var/lib/samba/printers browseable = yes read only = yes guest ok = no`
+
+**Dangerous settings to watch:**
+
+- `browseable = yes` → attacker can list share contents
+    
+- `guest ok = yes` → anonymous access allowed
+    
+- `writable = yes` + `create mask = 0777` → full write permissions
+    
+
+---
+
+## 4️ Creating a Test Share
+
+`[notes] comment = CheckIT path = /mnt/notes/ browseable = yes read only = no writable = yes guest ok = yes enable privileges = yes create mask = 0777 directory mask = 0777`
+
+Restart Samba to apply changes:
+
+`sudo systemctl restart smbd`
+
+---
+
+## 5️ SMB Enumeration with smbclient
+
+`# List server shares (anonymous) smbclient -N -L //10.129.14.128  # Connect to specific share smbclient //10.129.14.128/notes  # Commands in smbclient ls           # list files get <file>   # download file put <file>   # upload file !ls          # run local command help         # all smbclient commands`
+
+---
+
+## 6️ Checking Connections / Status
+
+`smbstatus # Shows users, shares, PIDs, encryption, signing`
+
+---
+
+## 7️ Nmap for SMB
+
+`sudo nmap -sV -sC -p139,445 10.129.14.128  # NSE scripts --script smb-os-discovery,smb-enum-shares,smb-enum-users`
+
+---
+
+## 8️ RPCclient (Manual SMB Enumeration)
+
+`rpcclient -U "" 10.129.14.128   # anonymous  # Commands srvinfo                  # server info enumdomains              # list domains querydominfo             # domain details netshareenumall          # list shares netsharegetinfo <share>  # share info enumdomusers             # list users queryuser <RID>          # user info querygroup <RID>         # group info`
+
+**Brute-force RIDs example:**
+
+`for i in $(seq 500 1100); do   rpcclient -N -U "" 10.129.14.128 -c "queryuser 0x$(printf '%x\n' $i)" \   | grep "User Name\|user_rid\|group_rid" && echo "" done`
+
+---
+
+## 9️ Impacket / Automation Tools
+
+`# Samrdump samrdump.py 10.129.14.128  # SMBMap smbmap -H 10.129.14.128  # CrackMapExec crackmapexec smb 10.129.14.128 --shares -u '' -p ''  # Enum4Linux-ng git clone https://github.com/cddmp/enum4linux-ng.git cd enum4linux-ng pip3 install -r requirements.txt ./enum4linux-ng.py 10.129.14.128 -A`
+
+---
+
+## 🔑 Key Takeaways
+
+- Anonymous SMB access is high-risk.
+    
+- Writable shares = potential file uploads / reverse shells.
+    
+- Use multiple tools (`rpcclient`, `smbclient`, `enum4linux-ng`, `SMBMap`, `CME`) to cross-check info.
+    
+- Enumerate shares → users → groups → permissions.
+# References 
+https://academy.hackthebox.com/module/112/section/1067
