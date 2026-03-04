@@ -1,0 +1,122 @@
+## **IPMI Overview**
+
+- **IPMI (Intelligent Platform Management Interface)**: Hardware-based system management protocol.
+    
+- Operates **independently of OS/BIOS/CPU**, allowing monitoring and management even when the host is off.
+    
+- Uses a **direct network connection**; no OS login required.
+    
+- Typical uses:
+    
+    1. Modify BIOS before OS boots.
+        
+    2. Access powered-off systems.
+        
+    3. Recover hosts after system failure.
+        
+- Monitors: **temperature, voltage, fans, power supplies**, hardware inventory, event logs.
+    
+- Components:
+    
+    - **BMC** – Baseboard Management Controller.
+        
+    - **ICMB** – Chassis communication.
+        
+    - **IPMB** – Extends BMC functionality.
+        
+    - **Memory** – Stores logs & config.
+        
+    - **Communication interfaces** – LAN, serial, ICMB, PCI management bus.
+        
+- First published by Intel in 1998; widely adopted by **HP, Dell, Supermicro, Cisco**, etc.
+    
+
+---
+
+## **Footprinting & Discovery**
+
+- **Default UDP port:** 623 (ASF-RMCP)
+    
+- Common BMCs: HP iLO, Dell DRAC, Supermicro IPMI.
+    
+- BMCs often offer:
+    
+    - Web console
+        
+    - SSH / Telnet
+        
+    - IPMI UDP (623)
+        
+
+**Nmap IPMI discovery example:**
+
+`sudo nmap -sU --script ipmi-version -p 623 <target>`
+
+**Metasploit scanner:**
+
+`use auxiliary/scanner/ipmi/ipmi_version set rhosts <target> run`
+
+---
+
+## **Default Credentials**
+
+|Product|Username|Password|
+|---|---|---|
+|Dell iDRAC|root|calvin|
+|HP iLO|Administrator|randomized 8-character string|
+|Supermicro IPMI|ADMIN|ADMIN|
+
+- Default passwords are extremely common on internal networks. Always try them first.
+    
+
+---
+
+## **Dangerous Settings / Vulnerabilities**
+
+- **RAKP protocol flaw in IPMI 2.0:** allows **offline hash retrieval**.
+    
+- BMCs send salted SHA1/MD5 password hashes before authentication—can be captured and cracked.
+    
+- **Hash cracking example (HP iLO default):**
+    
+
+`hashcat -m 7300 ipmi.txt -a 3 ?1?1?1?1?1?1?1?1 -1 ?d?u`
+
+- Mitigation: long, complex passwords and network segmentation.
+    
+
+---
+
+## **Retrieving & Cracking IPMI Hashes**
+
+**Metasploit module:**
+
+`use auxiliary/scanner/ipmi/ipmi_dumphashes set rhosts <target> run`
+
+- Can output hashes in **Hashcat** or **John** formats.
+    
+- Supports automatic cracking of common passwords using supplied wordlists.
+    
+
+**Example output:**
+
+`ADMIN: hash -> password = ADMIN`
+
+- From here, access BMC via **web, SSH, or Telnet**.
+    
+- Password reuse can allow lateral access to other critical systems.
+    
+
+---
+
+## **Why IPMI Matters in Pentests**
+
+- Accessing a BMC ≈ physical access to the host.
+    
+- Can **reboot, power off, reinstall OS**, or access BIOS remotely.
+    
+- Default credentials or weak hashes can lead to **root-level compromise**.
+    
+- Always check for **IPMI/DRAC/iLO** in internal assessments.
+# References 
+https://academy.hackthebox.com/module/112/section/1245
