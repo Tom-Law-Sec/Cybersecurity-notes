@@ -1,0 +1,281 @@
+## **Why Remote Management Matters**
+
+- Lets admins fix servers without being physically present.
+    
+- Used everywhere → also juicy targets during pentests.
+    
+- Misconfigurations = easy footholds.
+    
+
+---
+
+# **SSH**
+
+## **Overview**
+
+- Secure, encrypted remote access over **TCP 22**.
+    
+- Works on Linux, macOS natively; Windows via clients.
+    
+- Two protocol versions:
+    
+    - **SSH-1** – outdated, vulnerable to MITM.
+        
+    - **SSH-2** – secure, modern, widely used.
+        
+
+## **What SSH Can Do**
+
+- CLI logins
+    
+- GUI forwarding
+    
+- File transfers
+    
+- Port forwarding
+    
+- Remote command execution
+    
+
+## **OpenSSH Authentication Methods**
+
+1. Password
+    
+2. Public key
+    
+3. Host-based
+    
+4. Keyboard-interactive
+    
+5. Challenge-response
+    
+6. GSSAPI
+    
+
+---
+
+## **Public Key Authentication (Summary)**
+
+- Server sends public host key → client verifies.
+    
+- Client proves identity using private key + passphrase.
+    
+- Private key stays on local machine; public key stored server-side.
+    
+- Once unlocked, private key can authenticate to multiple hosts.
+    
+- More secure and convenient than password auth.
+    
+
+---
+
+## **Default OpenSSH Config**
+
+`cat /etc/ssh/sshd_config  | grep -v "#" | sed -r '/^\s*$/d'`
+
+Key defaults:
+
+- X11 forwarding enabled
+    
+- PAM enabled
+    
+- SFTP subsystem enabled
+    
+- Most other options commented out → require manual config
+    
+
+---
+
+## **Dangerous SSH Settings**
+
+|Setting|Why It’s Bad|
+|---|---|
+|`PasswordAuthentication yes`|Enables brute‑forcing|
+|`PermitEmptyPasswords yes`|Allows blank passwords|
+|`PermitRootLogin yes`|Direct root compromise|
+|`Protocol 1`|Weak, obsolete|
+|`X11Forwarding yes`|Potential injection vulns|
+|`AllowTcpForwarding yes`|Pivoting for attackers|
+|`PermitTunnel`|Can bypass network segmentation|
+|`DebianBanner yes`|Leakage of OS info|
+
+Weak passwords → extremely guessable due to human laziness + predictable patterns.
+
+---
+
+## **Footprinting SSH**
+
+### ssh-audit
+
+`git clone https://github.com/jtesta/ssh-audit.git && cd ssh-audit ./ssh-audit.py 10.129.14.132`
+
+- Reveals OpenSSH version
+    
+- Shows weak ciphers, old algorithms
+    
+- Helps identify exploitable cryptographic issues
+    
+- Example: OpenSSH versions like **8.2p1** were affected by MITM vulns (e.g., CVE-2020-14145)
+    
+
+### Check available auth methods
+
+`ssh -v cry0l1t3@10.129.14.132`
+
+### Force certain auth method (for brute-forcing)
+
+`ssh -v user@host -o PreferredAuthentications=password`
+
+---
+
+# **Rsync**
+
+## **Overview**
+
+- File sync/transfer tool; great for backups + mirroring.
+    
+- Works locally or over network.
+    
+- Uses **delta transfers** → sends only diffs.
+    
+- Default port: **873/tcp**
+    
+- Can run over SSH (`-e ssh`).
+    
+- Misconfig → exposes directories or files, sometimes **no auth required**.
+    
+
+## **Footprinting**
+
+### Nmap
+
+`sudo nmap -sV -p 873 127.0.0.1`
+
+### Manual probe via netcat
+
+`nc -nv 127.0.0.1 873`
+
+### Listing shares
+
+`rsync -av --list-only rsync://127.0.0.1/dev`
+
+- Can leak config files, secrets, ssh keys, etc.
+    
+- Full sync:
+    
+    `rsync -av rsync://127.0.0.1/dev`
+    
+
+---
+
+# **R-Services**
+
+## **Overview**
+
+- Ancient Unix remote-access suite.
+    
+- Totally insecure — sends everything in plaintext.
+    
+- Still found in old enterprise systems (Solaris, AIX, HP-UX).
+    
+- Ports:
+    
+    - **512** (rexec)
+        
+    - **513** (rlogin)
+        
+    - **514** (rsh/rcp)
+        
+
+## **Common R-Commands**
+
+|Command|Port|What It Does|
+|---|---|---|
+|`rcp`|514|Copy files (like `cp` but remote). No overwrite warnings.|
+|`rsh`|514|Remote shell, no login required if trusted.|
+|`rexec`|512|Runs commands remotely (password sent in cleartext).|
+|`rlogin`|513|Remote login (plaintext).|
+
+---
+
+## **Trusted Host Files**
+
+### `/etc/hosts.equiv`
+
+- System-wide trust relationships.
+    
+
+### `~/.rhosts`
+
+- Per-user trust.
+    
+- Format:
+    
+    `<username> <ip/hostname> + for wildcard`
+    
+
+Misconfig examples allow **passwordless login** across hosts.
+
+---
+
+## **Footprinting R-Services**
+
+`sudo nmap -sV -p 512,513,514 10.0.17.2`
+
+---
+
+## **Exploitation Example**
+
+### Login via rlogin (because of .rhosts misconfig)
+
+`rlogin 10.0.17.2 -l htb-student`
+
+### Enumerate logged-in users (network-wide)
+
+`rwho`
+
+### More detailed listing
+
+`rusers -al 10.0.17.5`
+
+This leaks:
+
+- logged-in users
+    
+- login times
+    
+- session types
+    
+- hostnames
+    
+- potential creds for lateral movement
+    
+
+---
+
+# **Final Takeaways**
+
+- Remote management protocols = high-value targets.
+    
+- SSH is secure _when configured correctly_; misconfigurations open doors.
+    
+- Rsync can leak entire directories if unsecured.
+    
+- R-services are basically “hack me” banners.
+    
+- During internal pentests, always enumerate:
+    
+    - open ports
+        
+    - exposed banners
+        
+    - outdated versions
+        
+    - weak ciphers
+        
+    - password reuse
+        
+    - trust relationships
+
+# References 
+https://academy.hackthebox.com/module/112/section/1240
