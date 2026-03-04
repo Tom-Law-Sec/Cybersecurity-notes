@@ -1,0 +1,119 @@
+### **MSSQL Overview**
+
+- Microsoft’s **SQL-based RDBMS**, closed-source, mainly runs on **Windows**.
+    
+- Strong integration with **.NET applications**, though newer versions can run on Linux/macOS.
+    
+- Works on **client-server architecture**:
+    
+    - **Server:** Hosts databases and executes queries.
+        
+    - **Clients:** Connect to server for management or queries.
+        
+
+---
+
+### **MSSQL Clients**
+
+- **SQL Server Management Studio (SSMS):**
+    
+    - Full-featured GUI client, often installed on server or admin machines.
+        
+    - Can store credentials, which could be a **security risk** if compromised.
+        
+- **Other clients:**
+    
+    - `mssql-cli`, SQL Server PowerShell, HeidiSQL, SQLPro
+        
+    - **Impacket’s `mssqlclient.py`** – very useful for pentesting, commonly available in Kali/Pwnbox.
+        
+
+**Locating Impacket client:**
+
+`locate mssqlclient # /usr/bin/impacket-mssqlclient # /usr/share/doc/python3-impacket/examples/mssqlclient.py`
+
+---
+
+### **Default System Databases**
+
+|Database|Description|
+|---|---|
+|`master`|Tracks all system info for the instance.|
+|`model`|Template for new databases; changes propagate to new DBs.|
+|`msdb`|Used by SQL Server Agent for jobs & alerts.|
+|`tempdb`|Temporary objects storage.|
+|`resource`|Read-only system objects shipped with SQL Server.|
+
+---
+
+### **Default Configuration**
+
+- MSSQL service usually runs as `NT SERVICE\MSSQLSERVER`.
+    
+- **Windows Authentication** is default:
+    
+    - OS handles login using local SAM or domain Active Directory.
+        
+    - Useful for auditing, but **compromised accounts** can lead to **privilege escalation & lateral movement**.
+        
+- Encryption is **not enforced by default**; self-signed certificates may be used if enabled.
+    
+
+---
+
+### **Dangerous / Misconfigured Settings**
+
+- Unencrypted client connections.
+    
+- Self-signed certificates (can be spoofed).
+    
+- Named pipes enabled.
+    
+- Weak or default `sa` account passwords.
+    
+
+---
+
+### **Footprinting / Scanning MSSQL**
+
+- Default TCP port: **1433**.
+    
+- Nmap scripts:
+    
+
+`sudo nmap --script ms-sql-info,ms-sql-empty-password,ms-sql-xp-cmdshell,ms-sql-config,ms-sql-ntlm-info,ms-sql-tables,ms-sql-hasdbaccess,ms-sql-dac,ms-sql-dump-hashes --script-args mssql.instance-port=1433,mssql.username=sa,mssql.password=,mssql.instance-name=MSSQLSERVER -sV -p 1433 <IP>`
+
+- Provides: hostname, instance name, version, TCP port, named pipes, cluster info.
+    
+- **Metasploit auxiliary scanner** (`mssql_ping`) can also enumerate MSSQL hosts.
+    
+
+---
+
+### **Connecting with mssqlclient.py**
+
+- Remote connection using credentials or guessed accounts:
+    
+
+`python3 mssqlclient.py Administrator@<IP> -windows-auth`
+
+- Once connected, can interact with the database using **T-SQL**.
+    
+
+**Example: Listing databases**
+
+`SQL> select name from sys.databases;  name --------- master tempdb model msdb`
+
+---
+
+### **Best Practices**
+
+- Never leave `sa` account with default/weak password.
+    
+- Enforce encryption for connections.
+    
+- Disable unnecessary named pipes if not used.
+    
+- Use a VM for experimentation to understand default configs & potential admin mistakes.
+# References 
+https://academy.hackthebox.com/module/112/section/1246
