@@ -1,0 +1,96 @@
+# Saving the Results
+
+When you run Nmap, don’t just yeet the results into the void. Save them. Future-you will thank you when you're comparing scans or writing reports at 3AM with a Red Bull in hand.
+
+Nmap gives you **three main output formats**, each with its own personality:
+
+### **1. Normal Output (`-oN`) → `.nmap`**
+
+- Human-readable.
+    
+- Good for just looking at your results without squinting.
+    
+- Perfect for notes and reports.
+    
+
+### **2. Grepable Output (`-oG`) → `.gnmap`**
+
+- Literally built so you can run `grep` on it.
+    
+- Great for scripting, automation, or hunting for “open” like it's buried treasure.
+    
+
+### **3. XML Output (`-oX`) → `.xml`**
+
+- Structured, machine-friendly.
+    
+- Ideal for importing into other tools or turning into pretty HTML reports.
+    
+
+If you don’t feel like picking — because who does — you can smack on:
+
+### **All Formats (`-oA`)**
+
+This saves **all three** at once, using the same filename prefix.
+
+`sudo nmap 10.129.2.28 -p- -oA target`
+
+This spits out:
+
+`target.nmap target.gnmap target.xml`
+
+---
+
+##  What Each Looks Like (Vibe Edition)
+
+### **Normal Output (`.nmap`)**
+
+Readable, clean, friendly. The golden retriever of scan outputs.
+
+Lists your open ports, host status, MAC, and timestamps in a tidy way.
+
+---
+
+### **Grepable Output (`.gnmap`)**
+
+Feels like CSV’s edgy cousin.  
+One line per host, everything smashed together so scripts can inhale it easily.
+
+Example:
+
+`Ports: 22/open/tcp, 25/open/tcp, 80/open/tcp`
+
+---
+
+### **XML Output (`.xml`)**
+
+Super detailed. Over-explains everything like a professor flexing their PhD.  
+But it’s perfect for generating reports.
+
+---
+
+##  Making Pretty HTML Reports
+
+Because sometimes your audience is management and not hackers.
+
+Convert XML → HTML with:
+
+`xsltproc target.xml -o target.html`
+
+Boom: instant polished report you can drop into your documentation like a pro.
+
+---
+
+##  Why You Should Care
+
+Saving Nmap results isn’t busywork — it’s strategy:
+
+- Compare multiple scans (before/after firewall changes, etc.)
+    
+- Load results into other tools (Nmap GUIs, dashboards, scripts)
+    
+- Create human-friendly reports without manually formatting anything
+    
+- Keep an audit trail of your recon
+# References 
+https://academy.hackthebox.com/module/19/section/104
